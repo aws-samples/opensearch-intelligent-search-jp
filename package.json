@@ -1,0 +1,21 @@
+{
+  "name": "opensearch-intelligent-search-jp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx -w packages/cdk jest",
+    "cdk:deploy": "npx -w packages/cdk cdk deploy"
+  },
+  "keywords": [],
+  "author": "",
+  "workspaces": [
+    "packages/cdk",
+    "packages/ui"
+  ],
+  "devDependencies": {
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.5",
+    "prettier-plugin-organize-imports": "^3.2.4"
+  }
+}
