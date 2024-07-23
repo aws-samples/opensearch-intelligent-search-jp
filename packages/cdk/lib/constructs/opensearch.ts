@@ -1,5 +1,5 @@
 import { PythonFunction } from '@aws-cdk/aws-lambda-python-alpha';
-import { CustomResource, RemovalPolicy } from 'aws-cdk-lib';
+import { CustomResource, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { CfnIdentityPoolRoleAttachment } from 'aws-cdk-lib/aws-cognito';
 import { EbsDeviceVolumeType } from 'aws-cdk-lib/aws-ec2';
 import {
@@ -123,12 +123,15 @@ export class Opensearch extends Construct {
           new PolicyStatement({
             actions: [
               'es:AssociatePackage',
+              'es:DissociatePackage',
               'es:DescribePackages',
               'es:ListDomainsForPackage',
+              'es:DescribeDomain',
             ],
             resources: ['*'],
           }),
         ],
+        timeout: Duration.minutes(15),
       }
     );
 

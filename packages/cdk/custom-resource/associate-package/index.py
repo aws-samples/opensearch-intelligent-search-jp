@@ -1,6 +1,7 @@
 import boto3
 import cfnresponse
 import json
+import time
 
 opensearch = boto3.client('opensearch')
 
@@ -11,7 +12,18 @@ def handler(event, context):
     domain_name = event['ResourceProperties']['DomainName']
 
     if event['RequestType'] == 'Create':
-        # OpenSearch 2.11 用の Sudachi Package ID を取得する（リージョンによって ID が変わる）
+        # OpenSearch ドメインが既に作成されているか確認。Domain Status の processing が true だった場合は待機。
+        while True:
+            res = opensearch.describe_domain(
+                DomainName=domain_name
+            )
+
+            if res['DomainStatus']['Processing'] is False:
+                break
+
+            time.sleep(10)
+
+        # OpenSearch 2.13 用の Sudachi Package ID を取得する（リージョンによって ID が変わる）
         res = opensearch.describe_packages(
             Filters=[
                 {
