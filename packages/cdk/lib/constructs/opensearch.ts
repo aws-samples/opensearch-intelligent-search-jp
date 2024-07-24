@@ -123,9 +123,9 @@ export class Opensearch extends Construct {
           new PolicyStatement({
             actions: [
               'es:AssociatePackage',
-              'es:DescribePackages',
               'es:ListDomainsForPackage',
               'es:DescribeDomain',
+              'es:DescribePackages',
             ],
             resources: ['*'],
           }),
@@ -134,12 +134,35 @@ export class Opensearch extends Construct {
       }
     );
 
-    const provider = new Provider(this, 'ResourceProvider', {
-      onEventHandler: associatePackageFunction,
-    });
+    const associatePackageIsCompleteFunction = new PythonFunction(
+      this,
+      'AssociatePackageIsCompleteFunction',
+      {
+        entry: 'custom-resource/associate-package',
+        handler: 'is_complete',
+        runtime: Runtime.PYTHON_3_12,
+        initialPolicy: [
+          new PolicyStatement({
+            actions: ['es:ListDomainsForPackage'],
+            resources: ['*'],
+          }),
+        ],
+        timeout: Duration.minutes(15),
+      }
+    );
 
-    new CustomResource(this, 'MyResource', {
-      serviceToken: provider.serviceToken,
+    const associatePacakgeProvider = new Provider(
+      this,
+      'AssociatePacakgeProvider',
+      {
+        onEventHandler: associatePackageFunction,
+        isCompleteHandler: associatePackageIsCompleteFunction,
+        totalTimeout: Duration.minutes(30),
+      }
+    );
+
+    new CustomResource(this, 'AssociatePackageResource', {
+      serviceToken: associatePacakgeProvider.serviceToken,
       properties: {
         DomainName: domain.domainName,
       },

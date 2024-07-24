@@ -1,5 +1,4 @@
 import boto3
-import cfnresponse
 import json
 import time
 
@@ -12,7 +11,10 @@ def handler(event, context):
     domain_name = event['ResourceProperties']['DomainName']
 
     if event['RequestType'] == 'Create':
-        # OpenSearch ドメインが既に作成されているか確認。Domain Status の processing が true だった場合は待機。
+        # OpenSearch ドメインが作成完了してから、Package を Associate 可能になるまで時間がかかることがあるため、一定時間待機
+        time.sleep(120)
+
+        # OpenSearch ドメインが既に作成されているか確認。Domain Status の processing が true だった場合は待機
         while True:
             res = opensearch.describe_domain(
                 DomainName=domain_name
@@ -54,8 +56,34 @@ def handler(event, context):
                 PackageID=package_id
             )
 
-        cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, package_id)
+        return {"package_id": package_id}
     if event['RequestType'] == 'Delete':
-        cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+        return {}
     if event['RequestType'] == 'Update':
-        cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+        return {}
+
+
+def is_complete(event, context):
+    print("Received event: " + json.dumps(event, indent=2))
+
+    domain_name = event['ResourceProperties']['DomainName']
+
+    if event['RequestType'] == 'Create':
+        package_id = event['package_id']
+
+        res = opensearch.list_domains_for_package(
+            PackageID=package_id
+        )
+
+        # もし domain_name に一致するドメインがあり、そのドメインのステータスが ACTIVE だった場合は、complete とする
+        for detail in res['DomainPackageDetailsList']:
+            if detail['DomainName'] == domain_name and detail['DomainPackageStatus'] == 'ACTIVE':
+                return {'IsComplete': True}
+
+    elif event['RequestType'] == 'Delete':
+        return {'IsComplete': True}
+
+    elif event['RequestType'] == 'Update':
+        return {'IsComplete': True}
+
+    return {'IsComplete': False}
