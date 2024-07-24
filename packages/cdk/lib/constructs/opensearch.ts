@@ -123,7 +123,6 @@ export class Opensearch extends Construct {
           new PolicyStatement({
             actions: [
               'es:AssociatePackage',
-              'es:DissociatePackage',
               'es:DescribePackages',
               'es:ListDomainsForPackage',
               'es:DescribeDomain',

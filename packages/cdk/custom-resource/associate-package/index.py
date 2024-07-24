@@ -56,11 +56,6 @@ def handler(event, context):
 
         cfnresponse.send(event, context, cfnresponse.SUCCESS, {}, package_id)
     if event['RequestType'] == 'Delete':
-        opensearch.dissociate_package(
-            DomainName=domain_name,
-            PackageID=event['PhysicalResourceId']
-        )
-
         cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
     if event['RequestType'] == 'Update':
         cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
