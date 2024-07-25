@@ -1,5 +1,5 @@
 import { PythonFunction } from '@aws-cdk/aws-lambda-python-alpha';
-import { CustomResource, RemovalPolicy } from 'aws-cdk-lib';
+import { CustomResource, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { CfnIdentityPoolRoleAttachment } from 'aws-cdk-lib/aws-cognito';
 import { EbsDeviceVolumeType } from 'aws-cdk-lib/aws-ec2';
 import {
@@ -123,21 +123,46 @@ export class Opensearch extends Construct {
           new PolicyStatement({
             actions: [
               'es:AssociatePackage',
-              'es:DescribePackages',
               'es:ListDomainsForPackage',
+              'es:DescribeDomain',
+              'es:DescribePackages',
             ],
             resources: ['*'],
           }),
         ],
+        timeout: Duration.minutes(15),
       }
     );
 
-    const provider = new Provider(this, 'ResourceProvider', {
-      onEventHandler: associatePackageFunction,
-    });
+    const associatePackageIsCompleteFunction = new PythonFunction(
+      this,
+      'AssociatePackageIsCompleteFunction',
+      {
+        entry: 'custom-resource/associate-package',
+        handler: 'is_complete',
+        runtime: Runtime.PYTHON_3_12,
+        initialPolicy: [
+          new PolicyStatement({
+            actions: ['es:ListDomainsForPackage'],
+            resources: ['*'],
+          }),
+        ],
+        timeout: Duration.minutes(15),
+      }
+    );
 
-    new CustomResource(this, 'MyResource', {
-      serviceToken: provider.serviceToken,
+    const associatePacakgeProvider = new Provider(
+      this,
+      'AssociatePacakgeProvider',
+      {
+        onEventHandler: associatePackageFunction,
+        isCompleteHandler: associatePackageIsCompleteFunction,
+        totalTimeout: Duration.minutes(30),
+      }
+    );
+
+    new CustomResource(this, 'AssociatePackageResource', {
+      serviceToken: associatePacakgeProvider.serviceToken,
       properties: {
         DomainName: domain.domainName,
       },

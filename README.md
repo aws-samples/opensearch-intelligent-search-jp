@@ -19,7 +19,7 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
     - [デモアプリのデプロイ](#デモアプリのデプロイ)
   - [Next Steps](#next-steps)
   - [Contributing](#contributing)
-  - [Licence](#licence)
+  - [License](#license)
 
 ## アーキテクチャ
 
@@ -35,7 +35,7 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
   - 詳細は CDK の[開発者ガイド](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)をご参照ください。
   - CDK アプリケーションをデプロイするためには、事前に [Bootstrap](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) が必要です。
 - Bedrock 上の Embedding モデルへのアクセス。
-  - Bedrock のコンソールから、Titan Text Embeddings V2 へのアクセス権を取得してください。詳細については、[Bedrock 開発者ガイド](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)をご参照ください。
+  - Bedrock のコンソールから、Titan Text Embeddings V2 へのアクセス権を取得してください (デフォルトでは、Bedrock のリージョンは `us-east-1` を使用しています)。詳細については、[Bedrock 開発者ガイド](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)をご参照ください。
 
 ### デモアプリのデプロイ
 
@@ -73,7 +73,7 @@ https://github.com/aws/aws-cdk/tree/main/packages/cdk-assets#using-drop-in-docke
 
 #### 3. サンプルデータ投入
 
-次に、サンプルデータを取り込み OpenSearch のインデックスを作成します。以下の手順は、OpenSearch の Domain 作成が完了してから実施してください。Domain の作成完了までは、`cdk deploy` の実行完了後さらに 30分程度かかります。Domain の状況は OpenSearch の AWS コンソールで確認できます。
+次に、サンプルデータを取り込み OpenSearch のインデックスを作成します。以下の手順は、CDK のデプロイが完了してから実施してください。
 
 OpenSearch の Domain のステータスが Active になったら、サンプルデータの投入を行います。
 実行には以下の2つの方法を用意しています。
@@ -130,7 +130,7 @@ $ aws ecs run-task --cluster {ECS_CLUSTER_NAME} --task-definition {ECS_TASK_DEFI
 
 書き込みが完了したかどうかは、ECS の Task の状態をコンソールからご確認ください。
 
-#### 4. フロント　UI　へアクセス
+#### 4. フロント UI へアクセス
 
 `cdk deploy` 実行ログの Outputs に表示されている情報の中から、`OpensearchIntelligentSearchJpStack.FrontFrontendUrl` という項目を探してください。こちらの値 (URL) にブラウザからアクセスしてください。
 
