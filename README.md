@@ -23,7 +23,7 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
 
 ## アーキテクチャ
 
-<img src="docs/assets/architecture.png" width="50%">
+<img src="docs/assets/architecture.png" width="70%">
 
 ## デプロイ
 
@@ -34,6 +34,9 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
 - CDK アプリケーションをデプロイできる環境。
   - 詳細は CDK の[開発者ガイド](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html)をご参照ください。
   - CDK アプリケーションをデプロイするためには、事前に [Bootstrap](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) が必要です。
+    ```
+    npx -w packages/cdk cdk bootstrap
+    ```
 - Bedrock 上の Embedding モデルへのアクセス。
   - Bedrock のコンソールから、Titan Text Embeddings V2 へのアクセス権を取得してください (デフォルトでは、Bedrock のリージョンは `us-east-1` を使用しています)。詳細については、[Bedrock 開発者ガイド](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)をご参照ください。
 
@@ -95,7 +98,8 @@ bash run-ingest-ecs-task.sh
 bash run-ingest-ecs-task.sh --index-name <index-name>
 ```
 
-##### Option 2 (直接 run-task コマンドを実行)
+<details>
+<summary>Option 2 (直接 run-task コマンドを実行)</summary>
 
 直接 ECS の run-task を実行する方法でもデータ投入可能です。
 
@@ -130,13 +134,15 @@ $ aws ecs run-task --cluster {ECS_CLUSTER_NAME} --task-definition {ECS_TASK_DEFI
 
 書き込みが完了したかどうかは、ECS の Task の状態をコンソールからご確認ください。
 
+</details>
+
 #### 4. フロント UI へアクセス
 
 `cdk deploy` 実行ログの Outputs に表示されている情報の中から、`OpensearchIntelligentSearchJpStack.FrontFrontendUrl` という項目を探してください。こちらの値 (URL) にブラウザからアクセスしてください。
 
 ユーザー登録の上、以下のような画面が表示されて検索結果が返ってくればデプロイ完了です。
 
-<img src="docs/assets/ui.png" width="50%">
+<img src="docs/assets/ui.png" width="100%">
 
 ## Next Steps
 
