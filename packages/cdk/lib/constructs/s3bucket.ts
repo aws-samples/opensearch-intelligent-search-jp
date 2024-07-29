@@ -1,4 +1,4 @@
-import { RemovalPolicy } from 'aws-cdk-lib';
+import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 
@@ -17,5 +17,11 @@ export class S3bucket extends Construct {
       autoDeleteObjects: true,
     });
     this.documentBucket = documentBucket;
+
+    new CfnOutput(this, 'documentBucketName', {
+      value: documentBucket.bucketName,
+      description: 'Document bucket name',
+      exportName: `DocumentBucketName`,
+    });
   }
 }
