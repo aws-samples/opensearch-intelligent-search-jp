@@ -15,12 +15,12 @@
 
 ## 全体構成
 
-本アセットのリポジトリ構成は以下の通りです。
+opensearch-intelligent-search-jp のリポジトリ構成は以下の通りです。
 
 ```
 .
 ├── README.md
-├── docs  # 本アセットのドキュメント
+├── docs  # opensearch-intelligent-search-jp のドキュメント
 ├── docs.zip  # サンプルデータ
 ├── package-lock.json
 ├── package.json
@@ -42,12 +42,12 @@ NPM の workspaces を用いた monorepo 構成となっており、packages デ
 
 - キーワード検索
   - キーワード検索は Okapi BM25 アルゴリズムを使ってドキュメントのスコアを計算します。検索クエリをトークンに分割し、そのトークンがドキュメント内に多く現れるか、トークンが一般的な単語 (例: the) ではないか、などを考慮して類似性を測ります。
-  - 本アセットではトークン化を行うトークナイザーとして Sudachi を利用しています。Sudachi の設定内容は [opensearch.py](../packages/cdk/ecs/ingest-data/app/opensearch.py) を参照ください。
+  - opensearch-intelligent-search-jp ではトークン化を行うトークナイザーとして Sudachi を利用しています。Sudachi の設定内容は [opensearch.py](../packages/cdk/ecs/ingest-data/app/opensearch.py) を参照ください。
 - ベクトル検索
   - ベクトル検索は、文書を機械学習モデルを使ってベクトル化し、そのベクトル間の類似度を測定してドキュメントのスコアを計算します。キーワード検索がキーワードの一致によってスコアを計算していたのに対し、ベクトル検索はより意味的な類似性を考慮してスコアを計算します。
-- ハイブリッド検索 (キーワード検索 + ハイブリッド検索)
-  - ハイブリッド検索は、キーワード検索とハイブリッド検索を合わせた検索手法です。
-  - 本アセットでは、OpenSearch の持つ [Hybrid search](https://opensearch.org/docs/latest/search-plugins/hybrid-search/) 機能を利用しています。
+- ハイブリッド検索 (キーワード検索 + ベクトル検索)
+  - ハイブリッド検索は、キーワード検索とベクトル検索を合わせた検索手法です。
+  - opensearch-intelligent-search-jp では、OpenSearch の持つ [Hybrid search](https://opensearch.org/docs/latest/search-plugins/hybrid-search/) 機能を利用しています。
 
 また、検索の用途に合わせて document モードと chunk モードという 2 つの検索単位でドキュメントを検索することが可能です。
 
