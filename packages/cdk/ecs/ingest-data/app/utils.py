@@ -134,25 +134,16 @@ def get_all_filepath(file_url):
     prefix = "/".join(file_url.split("/")[3:])
 
     file_list = []
-    objects = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-    if "Contents" in objects:
-        file_list.extend(
-            (
-                [
-                    f's3://{bucket_name}/{content["Key"]}'
-                    for content in objects["Contents"]
-                ]
+    kwargs = {"Bucket": bucket_name, "Prefix": prefix}
+    while True:
+        response = s3_client.list_objects_v2(**kwargs)
+        if response.get("Contents"):
+            file_list.extend(
+                [f's3://{bucket_name}/{content["Key"]}' for content in response["Contents"]]
             )
-        )
-        while objects.get("isTruncated"):
-            start_after = file_list[-1]
-            objects = s3_client.list_objects_v2(
-                Bucket=bucket_name, Prefix=prefix, StartAfter=start_after
-            )
-            if "Contents" in objects:
-                file_list.extend(
-                    ([content["Key"] for content in objects["Contents"]])
-                )
+        if not response.get("IsTruncated"):  # レスポンスが切り捨てられていない場合
+            break
+        kwargs["ContinuationToken"] = response["NextContinuationToken"]
 
     return file_list
 
