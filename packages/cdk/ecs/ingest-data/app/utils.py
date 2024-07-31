@@ -3,7 +3,6 @@ import tempfile
 import os
 
 # from unstructured.partition.auto import partition
-from urllib.parse import urlparse
 from langchain_community.document_loaders import (
     Docx2txtLoader,
     TextLoader,
