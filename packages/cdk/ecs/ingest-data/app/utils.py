@@ -3,6 +3,7 @@ import tempfile
 import os
 
 # from unstructured.partition.auto import partition
+from urllib.parse import urlparse
 from langchain_community.document_loaders import (
     Docx2txtLoader,
     TextLoader,
@@ -17,7 +18,7 @@ s3_client = boto3.client("s3")
 def parse_s3_uri(s3_uri):
     """
     S3のURIをバケット名、キー名、拡張子に分割する
-
+    
     Args:
         s3_uri (str): 例's3://bucket_name/test/test.txt'
     Returns:
@@ -26,7 +27,7 @@ def parse_s3_uri(s3_uri):
         extension: 拡張子(.txt)
     """
     bucket = s3_uri.split("//")[1].split("/")[0]
-    key = "/".join(s3_uri.split("//")[1].split("/")[1:])
+    key = '/'.join(s3_uri.split("//")[1].split("/")[1:])
     extension = os.path.splitext(key)[-1]
 
     return bucket, key, extension
@@ -37,7 +38,9 @@ def read_file(file_url):
 
     text = ""
 
-    with tempfile.NamedTemporaryFile(delete=True, suffix=extension) as temp_file:
+    with tempfile.NamedTemporaryFile(
+        delete=True, suffix=extension
+    ) as temp_file:
         temp_file_path = temp_file.name
         s3_client.download_file(bucket, key, temp_file_path)
 
@@ -47,14 +50,18 @@ def read_file(file_url):
             text = load_text(temp_file_path)
         if extension == ".pdf":
             text = load_pdf(temp_file_path)
-            text = text.replace("\n", "").replace("\r", "").replace("\u00A0", " ")
+            text = (
+                text.replace("\n", "").replace("\r", "").replace("\u00A0", " ")
+            )
         if extension == ".docx":
             text = load_word(temp_file_path)
         if extension == ".pptx":
             text = load_ppt(temp_file_path)
         if extension == ".html":
             text = load_html(temp_file_path)
-            text = text.replace("\n", "").replace("\r", "").replace("\u00A0", " ")
+            text = (
+                text.replace("\n", "").replace("\r", "").replace("\u00A0", " ")
+            )
 
     return text
 
@@ -148,7 +155,9 @@ def get_all_filepath(file_url):
                 Bucket=bucket_name, Prefix=prefix, StartAfter=start_after
             )
             if "Contents" in objects:
-                file_list.extend(([content["Key"] for content in objects["Contents"]]))
+                file_list.extend(
+                    ([content["Key"] for content in objects["Contents"]])
+                )
 
     return file_list
 
@@ -167,7 +176,9 @@ def get_all_keys(file_url):
                 Bucket=bucket_name, Prefix=prefix, StartAfter=start_after
             )
             if "Contents" in objects:
-                file_list.extend(([content["Key"] for content in objects["Contents"]]))
+                file_list.extend(
+                    ([content["Key"] for content in objects["Contents"]])
+                )
 
     return file_list
 
