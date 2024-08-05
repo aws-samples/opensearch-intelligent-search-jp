@@ -3,7 +3,6 @@ import tempfile
 import os
 
 # from unstructured.partition.auto import partition
-from urllib.parse import urlparse
 from langchain_community.document_loaders import (
     Docx2txtLoader,
     TextLoader,
@@ -15,21 +14,26 @@ from langchain_community.document_loaders import (
 s3_client = boto3.client("s3")
 
 
-def parse_s3_url(s3_url):
-    # 仮想ホスト形式の URL から、bucket, key, suffix を抽出する
-    # 例) https://bucket-name.s3.ap-northeast-1.amazonaws.com/key.txt
-    # bucket -> bucket-name, key -> key.txt, extension -> .txt
-    url = urlparse(s3_url)
-
-    bucket = url.netloc.split(".")[0]
-    key = url.path.lstrip("/")
-    extension = os.path.splitext(key)[1]
+def parse_s3_uri(s3_uri):
+    """
+    S3のURIをバケット名、キー名、拡張子に分割する
+    
+    Args:
+        s3_uri (str): 例's3://bucket_name/test/test.txt'
+    Returns:
+        bucket: バケット名(bucket_name)
+        key: キー名(test/test.txt)
+        extension: 拡張子(.txt)
+    """
+    bucket = s3_uri.split("//")[1].split("/")[0]
+    key = '/'.join(s3_uri.split("//")[1].split("/")[1:])
+    extension = os.path.splitext(key)[-1]
 
     return bucket, key, extension
 
 
 def read_file(file_url):
-    bucket, key, extension = parse_s3_url(file_url)
+    bucket, key, extension = parse_s3_uri(file_url)
 
     text = ""
 
