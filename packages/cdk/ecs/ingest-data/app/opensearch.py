@@ -74,23 +74,21 @@ class OpenSearchController:
                                             "助詞",
                                             "助動詞",
                                             "動詞,一般,*,*,*,終止形-一般",
-                                            "名詞,普通名詞,副詞可能"
-                                        ]
+                                            "名詞,普通名詞,副詞可能",
+                                        ],
                                     }
                                 },
                                 "analyzer": {
                                     "custom_sudachi_analyzer": {
                                         "filter": [
                                             "sudachi_normalizedform",
-                                            "custom_sudachi_part_of_speech"
+                                            "custom_sudachi_part_of_speech",
                                         ],
-                                        "char_filter": [
-                                            "icu_normalizer"
-                                        ],
+                                        "char_filter": ["icu_normalizer"],
                                         "type": "custom",
-                                        "tokenizer": "sudachi_tokenizer"
+                                        "tokenizer": "sudachi_tokenizer",
                                     }
-                                }
+                                },
                             },
                             "knn": True,
                             # インデックス時のパフォーマンスを考慮して refresh_interval を大きく設定
@@ -112,7 +110,10 @@ class OpenSearchController:
                             },
                             "docs_root": {"type": "keyword"},
                             "doc_name": {"type": "keyword"},
-                            "keyword": {"type": "text", "analyzer": "custom_sudachi_analyzer"},
+                            "keyword": {
+                                "type": "text",
+                                "analyzer": "custom_sudachi_analyzer",
+                            },
                             "service": {"type": "keyword"},
                         },
                     },
@@ -171,6 +172,14 @@ class OpenSearchController:
 
         chunks = self.split_text(text)
 
+        if "cohere" in self.cfg["model_id"]:
+            vectors = self.embed_with_cohere(chunks)
+        else:
+            vectors = self.embed_with_titan(chunks)
+
+        return vectors, chunks
+
+    def embed_with_titan(self, chunks):
         vectors = []
         for chunk in chunks:
             # API schema is adjust to Titan embedding model
@@ -184,8 +193,31 @@ class OpenSearchController:
             vectors.append(
                 json.loads(query_response["body"].read()).get("embedding")
             )
+        return vectors
 
-        return vectors, chunks
+    def embed_with_cohere(self, chunks):
+        vectors = []
+        max_text_num = 96
+        for i in range(0, len(chunks), max_text_num):
+            body = json.dumps(
+                {
+                    "texts": chunks[i : min(len(chunks), i + max_text_num)],
+                    "input_type": "search_document",
+                    "embedding_types": ["float"],
+                }
+            )
+            query_response = self.bedrock_runtime.invoke_model(
+                body=body,
+                modelId=self.cfg["model_id"],
+                accept="*/*",
+                contentType="application/json",
+            )
+            vectors.extend(
+                json.loads(query_response["body"].read()).get("embeddings")[
+                    "float"
+                ]
+            )
+        return vectors
 
     def parse_response(query_response):
 
@@ -236,13 +268,7 @@ class OpenSearchController:
                     }
                 }
             ],
-            "response_processors": [
-                {
-                    "collapse": {
-                        "field": "doc_name"
-                    }
-                }
-            ]
+            "response_processors": [{"collapse": {"field": "doc_name"}}],
         }
 
         self.aos_client.http.put(
@@ -252,13 +278,7 @@ class OpenSearchController:
         # collapse-search-pipeline の作成
         index_body = {
             "description": "Pipeline for collapse",
-            "response_processors": [
-                {
-                    "collapse": {
-                        "field": "doc_name"
-                    }
-                }
-            ]
+            "response_processors": [{"collapse": {"field": "doc_name"}}],
         }
 
         self.aos_client.http.put(
@@ -309,7 +329,7 @@ class OpenSearchController:
         for i in range(0, len(vectors), batch_size):
             helpers.bulk(
                 self.aos_client,
-                vectors[i: min(i + batch_size, len(vectors))],
+                vectors[i : min(i + batch_size, len(vectors))],
                 request_timeout=1000,
             )
 
