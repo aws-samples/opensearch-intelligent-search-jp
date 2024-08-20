@@ -61,6 +61,7 @@
     "@aws-cdk/aws-kms:reduceCrossAccountRegionPolicyScope": true,
     "@aws-cdk/aws-eks:nodegroupNameAttribute": true,
     "opensearchIndexName": "enterprise-search",
+    "embedModelId": "amazon.titan-embed-text-v2:0",
     "bedrockRegion": "us-east-1",
     "selfSignUpEnabled": true
   }

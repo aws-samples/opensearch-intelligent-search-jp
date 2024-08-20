@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     index_name = os.environ.get("OPENSEARCH_INDEX_NAME", "")
     dimension = os.environ.get("EMBED_DIMENSION", 1024)
-    model_id = os.environ.get("EMBED_MODEL_ID", "amazon.titan-embed-text-v2:0")
+    model_id = os.environ.get("EMBED_MODEL_ID", "")
     docs_url = os.environ.get("DOCUMENT_S3_URI", "")
     bedrock_region = os.environ.get("BEDROCK_REGION", "")
 

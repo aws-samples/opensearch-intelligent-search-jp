@@ -23,6 +23,7 @@ export interface IngestDataProps {
   vpcId?: string;
   opensearchDomain: Domain;
   opensearchIndexName: string;
+  embedModelId: string;
   bedrockRegion: string;
 }
 
@@ -110,7 +111,7 @@ export class IngestData extends Construct {
         OPENSEARCH_INDEX_NAME: props.opensearchIndexName,
         BEDROCK_REGION: props.bedrockRegion,
         EMBED_DIMENSION: '1024',
-        EMBED_MODEL_ID: 'amazon.titan-embed-text-v2:0',
+        EMBED_MODEL_ID: props.embedModelId,
         DOCUMENT_S3_URI: `s3://${props.documentBucket.bucketName}/docs`,
       },
     });

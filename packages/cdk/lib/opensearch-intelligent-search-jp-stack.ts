@@ -14,6 +14,7 @@ export class OpensearchIntelligentSearchJpStack extends cdk.Stack {
     super(scope, id, props);
 
     const opensearchIndexName = this.node.tryGetContext('opensearchIndexName');
+    const embedModelId = this.node.tryGetContext('embedModelId');
     const bedrockRegion = this.node.tryGetContext('bedrockRegion');
     const selfSignUpEnabled = this.node.tryGetContext('selfSignUpEnabled');
 
@@ -42,6 +43,7 @@ export class OpensearchIntelligentSearchJpStack extends cdk.Stack {
       documentBucket: s3bucket.documentBucket,
       opensearchDomain: opensearch.opensearchDomain,
       opensearchIndexName: opensearchIndexName,
+      embedModelId: embedModelId,
       bedrockRegion: bedrockRegion,
     });
 
