@@ -9,6 +9,7 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
   - 全文検索のアナライザーとして、[Sudachi プラグイン](https://github.com/WorksApplications/elasticsearch-sudachi)を利用
   - ベクトル検索用の Embedding 作成には、Amazon Bedrock 上のモデルを利用。
     - [Titan Text Embedding v2](https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html)
+    - [Cohere Embed Models](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-embed.html)
 
 目次
 
@@ -37,7 +38,7 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
     npx -w packages/cdk cdk bootstrap
     ```
 - Bedrock 上の Embedding モデルへのアクセス。
-  - Bedrock のコンソールから、Titan Text Embeddings V2 へのアクセス権を取得してください (デフォルトでは、Bedrock のリージョンは `us-east-1` を使用しています)。詳細については、[Bedrock 開発者ガイド](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)をご参照ください。
+  - Bedrock のコンソールから、Embedding モデル (Titan Text Embeddings V2 / Cohere Embed Models) へのアクセス権を取得してください (デフォルトでは、Bedrock のリージョンは `us-east-1` を使用しています)。詳細については、[Bedrock 開発者ガイド](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)をご参照ください。
 
 ### デモアプリのデプロイ
 
@@ -52,11 +53,12 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
 デモアプリの設定は、`packages/cdk/cdk.json` で指定しています。
 設定可能なパラメータとその意味は以下の通りです。
 
-|     パラメータ      |   デフォルト値    |                                               意味                                                |
-| :-----------------: | :---------------: | :-----------------------------------------------------------------------------------------------: |
-| opensearchIndexName | enterprise-search |                           デフォルトで使用される OpenSearch の Index 名                           |
-|    bedrockRegion    |     us-east-1     |                               Bedrock のモデルを呼び出すリージョン                                |
-|  selfSignUpEnabled  |       true        | Cognito のセルフサインアップの有効化の有無 (trueの場合、フロントUIからユーザー作成可能になります) |
+|     パラメータ      |         デフォルト値         |                                                                  意味                                                                  |
+| :-----------------: | :--------------------------: | :------------------------------------------------------------------------------------------------------------------------------------: |
+| opensearchIndexName |      enterprise-search       |                                           デフォルトで使用される OpenSearch のインデックス名                                           |
+|    embedModelId     | amazon.titan-embed-text-v2:0 | デフォルトで使用する Embedding モデルの Bedrock 上での [Model ID](https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html) |
+|    bedrockRegion    |          us-east-1           |                                                  Bedrock のモデルを呼び出すリージョン                                                  |
+|  selfSignUpEnabled  |             true             |                   Cognito のセルフサインアップの有効化の有無 (trueの場合、フロントUIからユーザー作成可能になります)                    |
 
 #### 2. AWS リソースの作成 (cdk deploy)
 
@@ -91,11 +93,18 @@ OpenSearch の Domain のステータスが Active になったら、サンプ�
 bash run-ingest-ecs-task.sh
 ```
 
-インデックス名を指定する場合、`--index-name` オプションを追加します。
+デフォルトのパラメータを上書きしたい場合、以下のようにパラメータを指定して実行してください。
 
 ```bash
-bash run-ingest-ecs-task.sh --index-name <index-name>
+bash run-ingest-ecs-task.sh --index-name <index-name> --embed-model-id <embed-model-id>
 ```
+
+上書き可能なパラメータは次の通りです。
+
+| cdk.json でのパラメータ名 | シェルスクリプト実行時のパラメータ |                                                       意味                                                        |
+| :-----------------------: | :--------------------------------: | :---------------------------------------------------------------------------------------------------------------: |
+|    opensearchIndexName    |            --index-name            |                                            OpenSearch のインデックス名                                            |
+|       embedModelId        |          --embed-model-id          | Embedding モデルの Bedrock 上での [Model ID](https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html) |
 
 <details>
 <summary>Option 2 (直接 run-task コマンドを実行)</summary>
