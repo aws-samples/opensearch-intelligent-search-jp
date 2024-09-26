@@ -13,7 +13,6 @@ export class OpensearchIntelligentSearchJpStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const opensearchIndexName = this.node.tryGetContext('opensearchIndexName');
     const bedrockRegion = this.node.tryGetContext('bedrockRegion');
     const selfSignUpEnabled = this.node.tryGetContext('selfSignUpEnabled');
 
@@ -28,7 +27,6 @@ export class OpensearchIntelligentSearchJpStack extends cdk.Stack {
     });
     const utilLambda = new UtilLambda(this, 'UtilLambda', {
       opensearchDomain: opensearch.opensearchDomain,
-      opensearchIndexName: opensearchIndexName,
       bedrockRegion: bedrockRegion,
     });
 
@@ -41,7 +39,6 @@ export class OpensearchIntelligentSearchJpStack extends cdk.Stack {
     const ingestData = new IngestData(this, 'IngestData', {
       documentBucket: s3bucket.documentBucket,
       opensearchDomain: opensearch.opensearchDomain,
-      opensearchIndexName: opensearchIndexName,
       bedrockRegion: bedrockRegion,
     });
 

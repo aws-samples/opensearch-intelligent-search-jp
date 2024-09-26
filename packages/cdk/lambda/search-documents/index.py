@@ -16,18 +16,38 @@ bedrock_runtime = boto3.client(
 
 def get_vector(client, text, index_name):
     # モデル ID を取得
-    model_id = client.indices.get(index=index_name)[index_name][
-        "mappings"]["_meta"]["model_id"]
+    model_id = client.indices.get(index=index_name)[index_name]["mappings"][
+        "_meta"
+    ]["model_id"]
 
-    # Bedrock のモデルからベクトルを取得
-    query_response = bedrock_runtime.invoke_model(
-        body=json.dumps({"inputText": text}),
-        modelId=model_id,
-        accept="application/json",
-        contentType="application/json",
-    )
+    if "cohere" in model_id:
+        body = json.dumps(
+            {
+                "texts": [text],
+                "input_type": "search_query",
+                "embedding_types": ["float"],
+            }
+        )
+        query_response = bedrock_runtime.invoke_model(
+            body=body,
+            modelId=model_id,
+            accept="*/*",
+            contentType="application/json",
+        )
+        vector = json.loads(query_response["body"].read()).get("embeddings")[
+            "float"
+        ][0]
+    else:
 
-    vector = json.loads(query_response["body"].read()).get("embedding")
+        # Bedrock のモデルからベクトルを取得
+        query_response = bedrock_runtime.invoke_model(
+            body=json.dumps({"inputText": text}),
+            modelId=model_id,
+            accept="application/json",
+            contentType="application/json",
+        )
+
+        vector = json.loads(query_response["body"].read()).get("embedding")
 
     return vector
 
@@ -35,19 +55,21 @@ def get_vector(client, text, index_name):
 def find_similar_docs(client, search_query, index_name, search_pipeline=None):
     if search_pipeline:
         results = client.search(
-            index=index_name, body=search_query, search_pipeline=search_pipeline)
+            index=index_name, body=search_query, search_pipeline=search_pipeline
+        )
     else:
-        results = client.search(
-            index=index_name, body=search_query)
+        results = client.search(index=index_name, body=search_query)
 
     search_results = []
     for hit in results["hits"]["hits"]:
         search_results.append(
-            {"text": hit["fields"]["keyword"][0],
-             "score": hit["_score"],
-             "service": hit["fields"]["service"][0],
-             "docs_root": hit["fields"]["docs_root"][0],
-             "doc_name": hit["fields"]["doc_name"][0]}
+            {
+                "text": hit["fields"]["keyword"][0],
+                "score": hit["_score"],
+                "service": hit["fields"]["service"][0],
+                "docs_root": hit["fields"]["docs_root"][0],
+                "doc_name": hit["fields"]["doc_name"][0],
+            }
         )
     return search_results
 
@@ -57,16 +79,11 @@ def find_similar_docs_keyword(client, text, index_name, search_result_unit):
         "size": 5,
         "_source": False,
         "fields": ["keyword", "service", "docs_root", "doc_name"],
-        "query": {
-            "match": {
-                "keyword": {
-                    "query": text
-                }
-            }
-        }}
-    if search_result_unit == 'document':
+        "query": {"match": {"keyword": {"query": text}}},
+    }
+    if search_result_unit == "document":
         search_pipeline = "collapse-search-pipeline"
-    elif search_result_unit == 'chunk':
+    elif search_result_unit == "chunk":
         search_pipeline = None
     else:
         raise ValueError("Invalid search result unit")
@@ -78,25 +95,20 @@ def find_similar_docs_vector(client, vector, index_name, search_result_unit):
         "size": 5,
         "_source": False,
         "fields": ["keyword", "service", "docs_root", "doc_name"],
-        "query": {
-            "knn": {
-                "vector": {
-                    "vector": vector,
-                    "k": 5
-                }
-            }
-        }
+        "query": {"knn": {"vector": {"vector": vector, "k": 5}}},
     }
-    if search_result_unit == 'document':
+    if search_result_unit == "document":
         search_pipeline = "collapse-search-pipeline"
-    elif search_result_unit == 'chunk':
+    elif search_result_unit == "chunk":
         search_pipeline = None
     else:
         raise ValueError("Invalid search result unit")
     return find_similar_docs(client, search_query, index_name, search_pipeline)
 
 
-def find_similar_docs_hybrid(client, vector, text, index_name, search_result_unit):
+def find_similar_docs_hybrid(
+    client, vector, text, index_name, search_result_unit
+):
     search_query = {
         "size": 5,
         "_source": False,
@@ -104,28 +116,16 @@ def find_similar_docs_hybrid(client, vector, text, index_name, search_result_uni
         "query": {
             "hybrid": {
                 "queries": [
-                    {
-                        "match": {
-                            "keyword": {
-                                "query": text
-                            }
-                        }
-                    },
-                    {
-                        "knn": {
-                            "vector": {
-                                "vector": vector,
-                                "k": 5
-                            }
-                        }
-                    }
+                    {"match": {"keyword": {"query": text}}},
+                    {"knn": {"vector": {"vector": vector, "k": 5}}},
                 ]
             }
-        }}
+        },
+    }
 
-    if search_result_unit == 'document':
+    if search_result_unit == "document":
         search_pipeline = "collapse-hybrid-search-pipeline"
-    elif search_result_unit == 'chunk':
+    elif search_result_unit == "chunk":
         search_pipeline = "hybrid-search-pipeline"
     else:
         raise ValueError("Invalid search result unit")
@@ -155,45 +155,48 @@ def get_aos_client(endpoint):
 def handler(event, context):
     endpoint = os.environ["OPENSEARCH_ENDPOINT"]
 
-    body = json.loads(event['body'])
+    body = json.loads(event["body"])
     client = get_aos_client(endpoint)
 
-    index_name = body['indexName']
-    text = body['text']
-    search_method = body['searchMethod']
-    search_result_unit = body['searchResultUnit']
+    index_name = body["indexName"]
+    text = body["text"]
+    search_method = body["searchMethod"]
+    search_result_unit = body["searchResultUnit"]
 
     headers = {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
     }
 
     try:
-        if search_method == 'hybrid':
+        if search_method == "hybrid":
             vector = get_vector(client, text, index_name)
             search_results = find_similar_docs_hybrid(
-                client, vector, text, index_name, search_result_unit)
+                client, vector, text, index_name, search_result_unit
+            )
 
-        elif search_method == 'vector':
+        elif search_method == "vector":
             vector = get_vector(client, text, index_name)
             search_results = find_similar_docs_vector(
-                client, vector, index_name, search_result_unit)
+                client, vector, index_name, search_result_unit
+            )
 
-        elif search_method == 'keyword':
+        elif search_method == "keyword":
             search_results = find_similar_docs_keyword(
-                client, text, index_name, search_result_unit)
+                client, text, index_name, search_result_unit
+            )
 
         else:
             return {
                 "statusCode": 400,
                 "headers": headers,
-                "body": json.dumps({"error": "invalid search method"})
+                "body": json.dumps({"error": "invalid search method"}),
             }
 
         return {
             "statusCode": 200,
             "headers": headers,
-            "body": json.dumps(search_results, ensure_ascii=False)
+            "body": json.dumps(search_results, ensure_ascii=False),
         }
 
     except ValueError as e:
@@ -201,7 +204,7 @@ def handler(event, context):
         return {
             "statusCode": 400,
             "headers": headers,
-            "body": json.dumps({"error": str(e)})
+            "body": json.dumps({"error": str(e)}),
         }
 
     except Exception as e:
@@ -209,5 +212,5 @@ def handler(event, context):
         return {
             "statusCode": 500,
             "headers": headers,
-            "body": json.dumps({"error": "Internal server error"})
+            "body": json.dumps({"error": "Internal server error"}),
         }

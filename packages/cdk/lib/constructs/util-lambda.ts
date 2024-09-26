@@ -8,7 +8,6 @@ import { Construct } from 'constructs';
 
 export interface UtilLambdaProps {
   opensearchDomain: Domain;
-  opensearchIndexName: string;
   bedrockRegion: string;
 }
 
@@ -45,7 +44,7 @@ export class UtilLambda extends Construct {
       role: deleteIndexLambdaRole,
       environment: {
         OPENSEARCH_ENDPOINT: props.opensearchDomain.domainEndpoint,
-        INDEX_NAME: props.opensearchIndexName,
+        INDEX_NAME: '',
       },
     });
 

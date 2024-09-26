@@ -22,7 +22,6 @@ export interface IngestDataProps {
   documentBucket: Bucket;
   vpcId?: string;
   opensearchDomain: Domain;
-  opensearchIndexName: string;
   bedrockRegion: string;
 }
 
@@ -107,10 +106,10 @@ export class IngestData extends Construct {
       }),
       environment: {
         OPENSEARCH_ENDPOINT: props.opensearchDomain.domainEndpoint,
-        OPENSEARCH_INDEX_NAME: props.opensearchIndexName,
+        OPENSEARCH_INDEX_NAME: '',
         BEDROCK_REGION: props.bedrockRegion,
         EMBED_DIMENSION: '1024',
-        EMBED_MODEL_ID: 'amazon.titan-embed-text-v2:0',
+        EMBED_MODEL_ID: '',
         DOCUMENT_S3_URI: `s3://${props.documentBucket.bucketName}/docs`,
       },
     });

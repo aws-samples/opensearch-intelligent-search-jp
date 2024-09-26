@@ -60,7 +60,6 @@
     "@aws-cdk/aws-codepipeline:defaultPipelineTypeToV2": true,
     "@aws-cdk/aws-kms:reduceCrossAccountRegionPolicyScope": true,
     "@aws-cdk/aws-eks:nodegroupNameAttribute": true,
-    "opensearchIndexName": "enterprise-search",
     "bedrockRegion": "us-east-1",
     "selfSignUpEnabled": true
   }

@@ -9,6 +9,7 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
   - 全文検索のアナライザーとして、[Sudachi プラグイン](https://github.com/WorksApplications/elasticsearch-sudachi)を利用
   - ベクトル検索用の Embedding 作成には、Amazon Bedrock 上のモデルを利用。
     - [Titan Text Embedding v2](https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html)
+    - [Cohere Embed Models](https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-embed.html)
 
 目次
 
@@ -37,7 +38,7 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
     npx -w packages/cdk cdk bootstrap
     ```
 - Bedrock 上の Embedding モデルへのアクセス。
-  - Bedrock のコンソールから、Titan Text Embeddings V2 へのアクセス権を取得してください (デフォルトでは、Bedrock のリージョンは `us-east-1` を使用しています)。詳細については、[Bedrock 開発者ガイド](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)をご参照ください。
+  - Bedrock のコンソールから、Embedding モデル (Titan Text Embeddings V2 / Cohere Embed Models) へのアクセス権を取得してください (デフォルトでは、Bedrock のリージョンは `us-east-1` を使用しています)。詳細については、[Bedrock 開発者ガイド](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)をご参照ください。
 
 ### デモアプリのデプロイ
 
@@ -52,11 +53,10 @@ opensearch-intelligent-search-jp は、生成 AI を活用した日本語検索�
 デモアプリの設定は、`packages/cdk/cdk.json` で指定しています。
 設定可能なパラメータとその意味は以下の通りです。
 
-|     パラメータ      |   デフォルト値    |                                               意味                                                |
-| :-----------------: | :---------------: | :-----------------------------------------------------------------------------------------------: |
-| opensearchIndexName | enterprise-search |                           デフォルトで使用される OpenSearch の Index 名                           |
-|    bedrockRegion    |     us-east-1     |                               Bedrock のモデルを呼び出すリージョン                                |
-|  selfSignUpEnabled  |       true        | Cognito のセルフサインアップの有効化の有無 (trueの場合、フロントUIからユーザー作成可能になります) |
+|    パラメータ     | デフォルト値 |                                               意味                                                |
+| :---------------: | :----------: | :-----------------------------------------------------------------------------------------------: |
+|   bedrockRegion   |  us-east-1   |                               Bedrock のモデルを呼び出すリージョン                                |
+| selfSignUpEnabled |     true     | Cognito のセルフサインアップの有効化の有無 (trueの場合、フロントUIからユーザー作成可能になります) |
 
 #### 2. AWS リソースの作成 (cdk deploy)
 
@@ -85,39 +85,40 @@ OpenSearch の Domain のステータスが Active になったら、サンプ�
 
 ##### Option 1 (シェルスクリプトで実行)
 
-簡易的にサンプルデータの投入を行う場合、以下のコマンドを実行します。
+以下のコマンドを実行します。
 
 ```bash
-bash run-ingest-ecs-task.sh
+bash run-ingest-ecs-task.sh --index-name <index-name> --embed-model-id <embed-model-id>
 ```
 
-インデックス名を指定する場合、`--index-name` オプションを追加します。
+指定可能なパラメータは以下の通りです。
 
-```bash
-bash run-ingest-ecs-task.sh --index-name <index-name>
-```
+|    パラメータ    |                                                       意味                                                        |
+| :--------------: | :---------------------------------------------------------------------------------------------------------------: |
+|   --index-name   |                                            OpenSearch のインデックス名                                            |
+| --embed-model-id | Embedding モデルの Bedrock 上での [Model ID](https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html) |
+
+embed-model-id には、Titan Embeddings もしくは Cohere Embed が使用可能です。主なモデルのmodel id は以下の通りです。(詳細は [Model ID](https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html) 参照)
+
+|         モデル名          |           モデルID           |
+| :-----------------------: | :--------------------------: |
+|  Titan Embedding Text v2  | amazon.titan-embed-text-v2:0 |
+| Cohere Embed Multilingual | cohere.embed-multilingual-v3 |
 
 <details>
 <summary>Option 2 (直接 run-task コマンドを実行)</summary>
 
 直接 ECS の run-task を実行する方法でもデータ投入可能です。
 
-以下のコマンドの大文字で書かれている4箇所を書き換えてから実行してください。
-
+以下のコマンドの大文字で書かれている6箇所を書き換えてから実行してください。
 書き換えは、`cdk deploy` 実行ログの最後にある Outputs に表示された以下の情報を使用して実施してください。
 
 - {ECS_CLUSTER_NAME}: OpensearchIntelligentSearchJpStack.IngestDataecsClusterName
 - {ECS_TASK_DEFINITION_ARN}: OpensearchIntelligentSearchJpStack.IngestDataecsTaskDefinition
 - {ECS_SUBNET_ID}: OpensearchIntelligentSearchJpStack.IngestDataecsSubnet
 - {SECURITY_GROUP_ID}: OpensearchIntelligentSearchJpStack.IngestDataecsSecurityGroup
-
-以下のコマンドの、ダブルクオーテーションを誤って削除しないよう気をつけてコピー＆ペーストを実施してください。
-
-```bash
-$ aws ecs run-task --cluster {ECS_CLUSTER_NAME} --task-definition {ECS_TASK_DEFINITION_ARN} --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=["{ECS_SUBNET_ID}"],securityGroups=["{SECURITY_GROUP_ID}"],assignPublicIp=ENABLED}"
-```
-
-OpenSearch のインデックス名を指定して作成したい場合は、以下のコマンドを実行してください。以下は、インデックス名を"great-enterprise-search" にする場合の例です。
+- {OPENSEARCH_INDEX_NAME}: 作成する OpenSearch インデックス名
+- {EMBED_MODEL_ID}: Embedding モデルの Bedrock 上での [Model ID](https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html)
 
 ```bash
 $ aws ecs run-task --cluster {ECS_CLUSTER_NAME} --task-definition {ECS_TASK_DEFINITION_ARN} --launch-type FARGATE --network-configuration "awsvpcConfiguration={subnets=["{ECS_SUBNET_ID}"],securityGroups=["{SECURITY_GROUP_ID}"],assignPublicIp=ENABLED}" --overrides '{
@@ -125,7 +126,10 @@ $ aws ecs run-task --cluster {ECS_CLUSTER_NAME} --task-definition {ECS_TASK_DEFI
         "name": "Container",
         "environment": [{
             "name": "OPENSEARCH_INDEX_NAME",
-            "value": "great-enterprise-search"
+            "value": "{OPENSEARCH_INDEX_NAME}"
+        },{
+            "name": "EMBED_MODEL_ID",
+            "value": "{EMBED_MODEL_ID}"
         }]
     }]
 }'
