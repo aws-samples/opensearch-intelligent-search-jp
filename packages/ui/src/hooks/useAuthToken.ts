@@ -15,7 +15,7 @@ export default function useAuthToken() {
     }
 
     getToken();
-  }, [tokens]);
+  }, [setTokens]);
 
   return tokens;
 }
