@@ -18,7 +18,7 @@
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-slot": "^1.0.2",
     "aws-amplify": "^6.3.2",
-    "axios": "^1.6.8",
+    "axios": "^1.13.5",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.378.0",
